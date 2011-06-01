@@ -1,0 +1,83 @@
+#!/usr/perl5/5.10.1/bin/perl
+
+use HTTP::Request::Common qw(POST);
+use LWP;
+use IO::File;
+use Digest::MD5;
+use Getopt::Long;
+use URI;
+use File::Basename qw(basename);
+
+use strict;
+use warnings;
+
+# Open and read file in 512 KB at a time, calculating the cumulative MD5 digest
+# of it
+my ($fh) = IO::File->new("$file","<");
+my ($md5) = Digest::MD5->new;
+my ($buf);
+
+while ( $fh->read($buf, 512 * 1024) ) {
+  $md5->add($buf);
+}
+
+$fh->close;
+
+# Spit out the hex digest
+my ($md5_digest) = $md5->hexdigest;
+
+# Prevent the reading of the full file contents into memory by LWP before
+# initiating the upload of the file - you'll run out of memory pretty quick
+# otherwise, with file sizes like these.
+#
+# NOTE: Setting this prevents simple debugging because it creates a closure to
+# represent the form to be built, rather than the form itself - disable this
+# temporarily to allow for debugging.   See HTTP::Request::Common for a more
+# complete explanation
+$HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
+
+#
+# Build the form, which can contain multiple files at once
+#
+my ($ua) = LWP::UserAgent->new;
+#
+# Default the host to localhost
+# TODO: Allow this to be customized later, as clients could send to different
+# hosts running the server side of this
+#
+if ( not $host ) { $host = "localhost" };
+
+my ($uri) = URI->new("http://${host}/file_receiver");
+if ($port) {
+  $uri->port($port);
+}
+
+my ($content) = [ "test.MD5" => $md5_digest ];
+push @$content, [ "test"     => [ "test"]   ];
+
+my ($req) = POST($uri,
+                 Content_Type => 'form-data',
+                 Content      => $content,
+                );
+
+my ($res) = $ua->request($req);
+
+if ($res->is_success) {
+  print "Successfully uploaded:\n";
+  #
+  # Now print response from the server too
+  #
+  #my ($tree) = HTML::TreeBuilder->new->parse($res->as_string);
+  #my ($fmt) = HTML::FormatText->new;
+  #print $fmt->format($tree);
+  print $res->as_string;
+} elsif ($res->is_error) {
+  print "\nFailed to upload files with these errors:\n\n";
+  #
+  # Now print response from the server too
+  #
+  #my ($tree) = HTML::TreeBuilder->new->parse($res->as_string);
+  #my ($fmt) = HTML::FormatText->new;
+  #print $fmt->format($tree);
+  print $res->as_string;
+}
