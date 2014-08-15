@@ -1,0 +1,163 @@
+#!/usr/bin/env perl
+use v5.10;
+use strict;
+use warnings;
+use autodie qw/:all/;
+ 
+my $as = shift
+  or die "Usage: $0 <perl-version>";
+my @args = @ARGV;
+ 
+# trailing "t" means do threads
+my @threads = ( $as =~ /t$/ ) ? (qw/-D usethreads/) : ();
+ 
+$as =~ s/^5\.//;
+my $perl = "5.$as";
+$perl =~ s/t$//; # strip trailing "t" if any
+my $lib = $as . '@std';
+
+# Test::Base needs gmake! 
+my @problem_modules = qw(
+  JSON::XS
+  IPC::Run
+);
+ 
+  # Task::BeLike::DAGOLDEN
+my @to_install = qw(
+ Test::Output
+ Test::Class::Moose
+ PadWalker
+ version
+ Readonly
+ Log::Dispatch::FileRotate
+ MooseX::Log::Log4perl
+ Test::Effects
+ Time::HiRes
+
+ DateTime
+ DateTime::Format::Duration
+ POSIX::RT::Timer
+ File::MMagic
+
+ Test::MockTime
+ Digest::SHA1
+
+ DBIx::Class::Helpers
+ DBIx::Class::EncodedColumns
+
+ Catalyst::Devel
+ Test::DBIx::Class
+ 
+);
+
+
+ YAML
+ Expect
+ Term::ReadKey
+ Term::Size
+ Test::Pod
+ Test::Memory::Cycle
+ Tie::IxHash
+ LWP
+ CPAN::Mini
+ IO::String
+ IPC::Run3
+
+ IO::Socket::SSL
+ Catalyst::Devel
+ Catalyst::View::TT
+ Catalyst::View::JSON
+ Catalyst::Plugin::Unicode
+ Catalyst::Model::Adaptor
+ Catalyst::Controller::REST
+ XML::LibXML
+ XML::DOM
+ XML::Twig
+ XML::XPath
+ Archive::Tar
+ Archive::Zip
+ HTML::TreeBuilder
+ HTML::Entities::Numbered
+ Excel::Writer::XLSX
+ Math::BigInt
+ bignum
+ Math::BigInt::FastCalc
+ Math::BigRat
+ Storable
+ Date::Manip
+ Date::Calc
+# Net::Pcap
+# Acme::LOLCAT
+# Number::Bytes::Human
+ Net::ISC::DHCPd
+ IO::Prompt
+ Text::Diff
+ Perl::Tidy
+ Perl::Critic
+ CatalystX::REPL
+
+ Crypt::Blowfish
+ Crypt::CBC
+ Crypt::DES
+ Crypt::IDEA
+# Crypt::Rijndael
+
+ Crypt::X509
+ Crypt::DSA
+ Crypt::CAST5
+ Crypt::OpenSSL::AES
+
+# Catalyst::Plugin::Session::Store::Memcached::Fast
+ Catalyst::Plugin::Session::Store::FastMmap
+ Catalyst::Plugin::Session::Store::BerkeleyDB
+# ### Catalyst::Plugin::Prototype
+ Catalyst::Plugin::Log::Log4perl
+ Catalyst::Plugin::LogDeep
+ Catalyst::Plugin::LogWarnings
+
+ DBIx::Class
+ SQL::Translator
+ #DBIx::Class::DeploymentHandler
+ DBIx::Class::Migration
+ DateTime::Format::Strptime
+ DateTime::Format::SQLite
+ DateTime::Format::MySQL
+ Catalyst::Helper::Model::DBIC::Schema
+ DBIx::Class::TimeStamp
+ Catalyst::Helper::Model::LDAP
+ Catalyst::Helper::Prototype
+
+
+ );
+ 
+my @no_man = qw/-D man1dir=none -D man3dir=none/;
+my @myargs = qw/-D usedtrace -D use64bitint -D use64bitall
+                -D uselargefiles -D optimize=-xO3
+                -n /;
+
+# install perl and lock it down
+system( qw/perlbrew install/, "$ENV{HOME}/perl5/perlbrew/dists/perl-5.20.0.tar.gz",
+        qw/--as/, $as, $perl, @threads,
+        @no_man, @myargs, @args );
+
+system( qw/chmod -R a-w/, "$ENV{HOME}/perl5/perlbrew/perls/$as" );
+ 
+# give us a local::lib for installing things
+system( qw/perlbrew lib create/, $lib );
+ 
+# let's avoid any pod tests when we try to install stuff
+system( qw/perlbrew exec --with/, $lib,
+        qw/cpanm -v --mirror-only --mirror/, "$ENV{HOME}/CPAN",
+        qw/TAP::Harness::Restricted/ );
+local $ENV{HARNESS_SUBCLASS} = "TAP::Harness::Restricted";
+ 
+# some things need forcing
+system( qw/perlbrew exec --with/, $lib,
+        qw/cpanm -f -v --mirror-only --mirror/, "$ENV{HOME}/CPAN",
+        @problem_modules );
+ 
+# now install the rest
+# system( qw/perlbrew exec --with/, $lib, qw/cpanm/, @to_install );
+ 
+# repeat to catch any circularity problems
+# system( qw/perlbrew exec --with/, $lib, qw/cpanm/, @to_install );
