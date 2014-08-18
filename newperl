@@ -3,13 +3,34 @@ use v5.10;
 use strict;
 use warnings;
 use autodie qw/:all/;
- 
-my $as = shift
-  or die "Usage: $0 <perl-version>";
+use Getopt::Long;
+
+my $as;
+my $threads;
+my ($dist,@dist);
+
+GetOptions ("as=s"     => \$as,        # string
+            "dist:s"   => \$dist,      # string (optional)
+            "threads"  => \$threads)   # flag
+or die("Error in command line arguments\n");
+
+unless ($as) {
+  die "Usage: $0 --as=<perl-version>";
+}
+
+if ($dist) {
+  my $dist_path = 
+    "$ENV{HOME}/perl5/perlbrew/dists/${dist}";
+  if (-f $dist_path) {
+    @dist = ( $dist_path );
+  } else {
+    die "Specified dist $dist_path doesn't exist";
+  }
+} else { @dist = (); }
 my @args = @ARGV;
  
-# trailing "t" means do threads
-my @threads = ( $as =~ /t$/ ) ? (qw/-D usethreads/) : ();
+# --threads means do threads
+my @threads = ( $threads ) ? (qw/-D usethreads/) : ();
  
 $as =~ s/^5\.//;
 my $perl = "5.$as";
@@ -51,94 +72,93 @@ my @to_install = qw(
 );
 
 
- YAML
- Expect
- Term::ReadKey
- Term::Size
- Test::Pod
- Test::Memory::Cycle
- Tie::IxHash
- LWP
- CPAN::Mini
- IO::String
- IPC::Run3
+### YAML
+### Expect
+### Term::ReadKey
+### Term::Size
+### Test::Pod
+### Test::Memory::Cycle
+### Tie::IxHash
+### LWP
+### CPAN::Mini
+### IO::String
+### IPC::Run3
+###
+### IO::Socket::SSL
+### Catalyst::Devel
+### Catalyst::View::TT
+### Catalyst::View::JSON
+### Catalyst::Plugin::Unicode
+### Catalyst::Model::Adaptor
+### Catalyst::Controller::REST
+### XML::LibXML
+### XML::DOM
+### XML::Twig
+### XML::XPath
+### Archive::Tar
+### Archive::Zip
+### HTML::TreeBuilder
+### HTML::Entities::Numbered
+### Excel::Writer::XLSX
+### Math::BigInt
+### bignum
+### Math::BigInt::FastCalc
+### Math::BigRat
+### Storable
+### Date::Manip
+### Date::Calc
+#### Net::Pcap
+#### Acme::LOLCAT
+#### Number::Bytes::Human
+### Net::ISC::DHCPd
+### IO::Prompt
+### Text::Diff
+### Perl::Tidy
+### Perl::Critic
+### CatalystX::REPL
+###
+### Crypt::Blowfish
+### Crypt::CBC
+### Crypt::DES
+### Crypt::IDEA
+#### Crypt::Rijndael
+###
+### Crypt::X509
+### Crypt::DSA
+### Crypt::CAST5
+### Crypt::OpenSSL::AES
+###
+#### Catalyst::Plugin::Session::Store::Memcached::Fast
+### Catalyst::Plugin::Session::Store::FastMmap
+### Catalyst::Plugin::Session::Store::BerkeleyDB
+#### ### Catalyst::Plugin::Prototype
+### Catalyst::Plugin::Log::Log4perl
+### Catalyst::Plugin::LogDeep
+### Catalyst::Plugin::LogWarnings
+###
+### DBIx::Class
+### SQL::Translator
+### #DBIx::Class::DeploymentHandler
+### DBIx::Class::Migration
+### DateTime::Format::Strptime
+### DateTime::Format::SQLite
+### DateTime::Format::MySQL
+### Catalyst::Helper::Model::DBIC::Schema
+### DBIx::Class::TimeStamp
+### Catalyst::Helper::Model::LDAP
+### Catalyst::Helper::Prototype
 
- IO::Socket::SSL
- Catalyst::Devel
- Catalyst::View::TT
- Catalyst::View::JSON
- Catalyst::Plugin::Unicode
- Catalyst::Model::Adaptor
- Catalyst::Controller::REST
- XML::LibXML
- XML::DOM
- XML::Twig
- XML::XPath
- Archive::Tar
- Archive::Zip
- HTML::TreeBuilder
- HTML::Entities::Numbered
- Excel::Writer::XLSX
- Math::BigInt
- bignum
- Math::BigInt::FastCalc
- Math::BigRat
- Storable
- Date::Manip
- Date::Calc
-# Net::Pcap
-# Acme::LOLCAT
-# Number::Bytes::Human
- Net::ISC::DHCPd
- IO::Prompt
- Text::Diff
- Perl::Tidy
- Perl::Critic
- CatalystX::REPL
-
- Crypt::Blowfish
- Crypt::CBC
- Crypt::DES
- Crypt::IDEA
-# Crypt::Rijndael
-
- Crypt::X509
- Crypt::DSA
- Crypt::CAST5
- Crypt::OpenSSL::AES
-
-# Catalyst::Plugin::Session::Store::Memcached::Fast
- Catalyst::Plugin::Session::Store::FastMmap
- Catalyst::Plugin::Session::Store::BerkeleyDB
-# ### Catalyst::Plugin::Prototype
- Catalyst::Plugin::Log::Log4perl
- Catalyst::Plugin::LogDeep
- Catalyst::Plugin::LogWarnings
-
- DBIx::Class
- SQL::Translator
- #DBIx::Class::DeploymentHandler
- DBIx::Class::Migration
- DateTime::Format::Strptime
- DateTime::Format::SQLite
- DateTime::Format::MySQL
- Catalyst::Helper::Model::DBIC::Schema
- DBIx::Class::TimeStamp
- Catalyst::Helper::Model::LDAP
- Catalyst::Helper::Prototype
-
-
- );
  
 my @no_man = qw/-D man1dir=none -D man3dir=none/;
-my @myargs = qw/-D usedtrace -D use64bitint -D use64bitall
+my @solaris_args =
+             qw/-D usedtrace -D use64bitint -D use64bitall
                 -D uselargefiles -D optimize=-xO3
                 -n /;
 
 # install perl and lock it down
-system( qw/perlbrew install/, "$ENV{HOME}/perl5/perlbrew/dists/perl-5.20.0.tar.gz",
+system( qw/perlbrew install/, @dist,
         qw/--as/, $as, $perl, @threads,
-        @no_man, @myargs, @args );
+        @no_man, @solaris_args, @args );
 
 system( qw/chmod -R a-w/, "$ENV{HOME}/perl5/perlbrew/perls/$as" );
  
