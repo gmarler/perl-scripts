@@ -151,8 +151,8 @@ my @to_install = qw(
  
 my @no_man = qw/-D man1dir=none -D man3dir=none/;
 my @solaris_args =
-             qw/-D usedtrace -D use64bitint -D use64bitall
-                -D uselargefiles -D optimize=-xO3
+             qw/-Dusedtrace -Duse64bitint -Duse64bitall
+                -Duselargefiles -D optimize=-xO3
                 -n /;
 
 # install perl and lock it down
