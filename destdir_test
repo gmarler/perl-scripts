@@ -15,7 +15,10 @@ export PATH
 # This is the Perl we'll be using (change if needed):
 # TODO: Use a macro here, and a spec include file to define the Perl
 #export PERL5LIB=${RPM_BUILD_ROOT}/$HOME/perl5/perlbrew/perls/perl-5.18.2-THREADS/lib/site_perl/5.18.2
-export PERL5LIB=$( perl -MConfig -e 'print $Config{sitelibexp};' )
+PERL5LIB=$( perl -MConfig -e 'print $Config{privlibexp};' ):$PERL5LIB
+PERL5LIB=$( perl -MConfig -e 'print $Config{vendorlibexp};' ):$PERL5LIB
+PERL5LIB=$( perl -MConfig -e 'print $Config{sitelibexp};' ):$PERL5LIB
+export PERL5LIB
 
 # For Module::Build based modules
 export PERL_MB_OPT="--installdirs site --destdir ${RPM_BUILD_ROOT} create_packlist=0"
