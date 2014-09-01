@@ -10,7 +10,7 @@ mkdir ${RPM_BUILD_ROOT}
 #
 # This is the Perl we'll be using (change if needed):
 # TODO: Use a macro here, and a spec include file to define the Perl
-export PERL5LIB=${RPM_BUILD_ROOT}/usr/perl5/5.18.1/lib:/home/gmarler/perl5/lib/perl5
+export PERL5LIB=${RPM_BUILD_ROOT}/$HOME/perl5/perlbrew/perls/perl-5.18.2-THREADS/lib/site_perl/5.18.2
 
 export PATH=/usr/perl5/5.18.1/bin:$PATH
 # For Module::Build based modules
@@ -46,13 +46,15 @@ export HARNESS_SUBCLASS="TAP::Harness::Restricted"
 
 MODLIST="
 Digest::MD5
-Digest::SHA1
-Digest::SHA
-Modern::Perl
-Log::Dispatch::FileRotate
 "
+# Digest::SHA1
+# Digest::SHA
+# Modern::Perl
+# Log::Dispatch::FileRotate
+
 for mod in $MODLIST; do
   ${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
            --self-contained --noman-pages --pureperl \
            $mod
 done
+
