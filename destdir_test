@@ -1,0 +1,58 @@
+#!/bin/ksh
+
+PINTOD_SERVER=${1:?Need to specify a pintod server name}
+
+RPM_BUILD_ROOT=/tmp/junkbuild.$$
+mkdir ${RPM_BUILD_ROOT}
+
+#
+# Install any Perl modules and their associated utilities, if any, via cpanm
+#
+# This is the Perl we'll be using (change if needed):
+# TODO: Use a macro here, and a spec include file to define the Perl
+export PERL5LIB=${RPM_BUILD_ROOT}/usr/perl5/5.18.1/lib:/home/gmarler/perl5/lib/perl5
+
+export PATH=/usr/perl5/5.18.1/bin:$PATH
+# For Module::Build based modules
+export PERL_MB_OPT="--installdirs site --destdir ${RPM_BUILD_ROOT} create_packlist=0"
+# For ExtUtil::MakeMaker based modules
+export DESTDIR=${RPM_BUILD_ROOT}
+export NO_PACKLIST=1
+export NO_PERLLOCAL=1
+export PERL_MM_OPT="INSTALLDIRS=site DESTDIR=${RPM_BUILD_ROOT} NO_PACKLIST=1 NO_PERLLOCAL=1"
+# And now for the modules we'll be installing under /usr/perl5/5.18.1/...
+# Of course, Pinto, will need to be running on nydevsol10's port 3111, as per
+# {TEAM 303601912<GO>}, subsection: "Pinto Server Launch"
+#
+# make sure we don't have proxies set for this
+unset http_proxy
+unset https_proxy
+
+#CPANM="/usr/perl5/site_perl/5.18.1/bin/cpanm"
+CPANM=$(whence cpanm)
+
+if [[ -z "${CPANM}" ]]; then
+  print -- "No cpanm in path - set one!"
+  exit 1
+else
+  print -- "CPANM from: [${CPANM}]"
+fi
+
+${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
+      --self-contained --noman-pages --pureperl \
+      TAP::Harness::Restricted
+
+export HARNESS_SUBCLASS="TAP::Harness::Restricted"
+
+MODLIST="
+Digest::MD5
+Digest::SHA1
+Digest::SHA
+Modern::Perl
+Log::Dispatch::FileRotate
+"
+for mod in $MODLIST; do
+  ${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
+           --self-contained --noman-pages --pureperl \
+           $mod
+done
