@@ -29,8 +29,16 @@ export PERL_MM_OPT="INSTALLDIRS=site DESTDIR=${RPM_BUILD_ROOT} NO_PACKLIST=1 NO_
 unset http_proxy
 unset https_proxy
 
+#
+# Bootstrap cpanm for the build of Perl we're working on
+#
+cd /tmp
+curl -LO http://xrl.us/cpanm
+chmod +x cpanm
+
 #CPANM="/usr/perl5/site_perl/5.18.1/bin/cpanm"
-CPANM=$(whence cpanm)
+#CPANM=$(whence cpanm)
+CPANM=/tmp/cpanm
 
 if [[ -z "${CPANM}" ]]; then
   print -- "No cpanm in path - set one!"
