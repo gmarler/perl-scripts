@@ -41,7 +41,8 @@ export PERL_MM_OPT="INSTALLDIRS=site DESTDIR=${RPM_BUILD_ROOT} NO_PACKLIST=1 NO_
 # Of course, Pinto, will need to be running on nydevsol10's port 3111, as per
 # {TEAM 303601912<GO>}, subsection: "Pinto Server Launch"
 #
-# make sure we don't have proxies set for this
+# Make sure we don't have proxies set after this point
+#
 unset http_proxy
 unset https_proxy
 
