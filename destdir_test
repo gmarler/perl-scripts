@@ -5,7 +5,10 @@ PINTOD_SERVER=${1:?Need to specify a pintod server name}
 RPM_BUILD_ROOT=/tmp/junkbuild.$$
 mkdir ${RPM_BUILD_ROOT}
 
-export PATH=/usr/perl5/5.18.1/bin:$PATH
+PATH=$(dirname $(whence perl)):$PATH
+PATH=$( perl -MConfig -e 'print $Config{vendorbinexp};' ):$PATH
+PATH=$( perl -MConfig -e 'print $Config{sitebinexp};' ):$PATH
+export PATH
 #
 # Install any Perl modules and their associated utilities, if any, via cpanm
 #
