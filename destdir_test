@@ -5,19 +5,29 @@ PINTOD_SERVER=${1:?Need to specify a pintod server name}
 RPM_BUILD_ROOT=/tmp/junkbuild.$$
 mkdir ${RPM_BUILD_ROOT}
 
+#
+# Set the $PATH so we'll always look at the $DESTDIR binaries first, if they
+# exist, as we'll prefer those while creating the set of CPAN modules to go into
+# the separate CPAN IPS package.
+#
 PATH=$(dirname $(whence perl)):$PATH
+PATH=${RPM_BUILD_ROOT}/$(dirname $(whence perl)):$PATH
 PATH=$( perl -MConfig -e 'print $Config{vendorbinexp};' ):$PATH
+PATH=${RPM_BUILD_ROOT}/$( perl -MConfig -e 'print $Config{vendorbinexp};' ):$PATH
 PATH=$( perl -MConfig -e 'print $Config{sitebinexp};' ):$PATH
+PATH=${RPM_BUILD_ROOT}/$( perl -MConfig -e 'print $Config{sitebinexp};' ):$PATH
 export PATH
 #
 # Install any Perl modules and their associated utilities, if any, via cpanm
 #
 # This is the Perl we'll be using (change if needed):
-# TODO: Use a macro here, and a spec include file to define the Perl
-#export PERL5LIB=${RPM_BUILD_ROOT}/$HOME/perl5/perlbrew/perls/perl-5.18.2-THREADS/lib/site_perl/5.18.2
+# - Fall back to installed Perl installation private library if necessary
+# - For everything else, make sure to only look inside the $DESTDIR, as if no
+#   site or vendor specific modules have ever been installed.
 PERL5LIB=$( perl -MConfig -e 'print $Config{privlibexp};' ):$PERL5LIB
-PERL5LIB=$( perl -MConfig -e 'print $Config{vendorlibexp};' ):$PERL5LIB
-PERL5LIB=$( perl -MConfig -e 'print $Config{sitelibexp};' ):$PERL5LIB
+PERL5LIB=${RPM_BUILD_ROOT}/$( perl -MConfig -e 'print $Config{privlibexp};' ):$PERL5LIB
+PERL5LIB=${RPM_BUILD_ROOT}/$( perl -MConfig -e 'print $Config{vendorlibexp};' ):$PERL5LIB
+PERL5LIB=${RPM_BUILD_ROOT}/$( perl -MConfig -e 'print $Config{sitelibexp};' ):$PERL5LIB
 export PERL5LIB
 
 # For Module::Build based modules
