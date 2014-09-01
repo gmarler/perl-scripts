@@ -5,14 +5,15 @@ PINTOD_SERVER=${1:?Need to specify a pintod server name}
 RPM_BUILD_ROOT=/tmp/junkbuild.$$
 mkdir ${RPM_BUILD_ROOT}
 
+export PATH=/usr/perl5/5.18.1/bin:$PATH
 #
 # Install any Perl modules and their associated utilities, if any, via cpanm
 #
 # This is the Perl we'll be using (change if needed):
 # TODO: Use a macro here, and a spec include file to define the Perl
-export PERL5LIB=${RPM_BUILD_ROOT}/$HOME/perl5/perlbrew/perls/perl-5.18.2-THREADS/lib/site_perl/5.18.2
+#export PERL5LIB=${RPM_BUILD_ROOT}/$HOME/perl5/perlbrew/perls/perl-5.18.2-THREADS/lib/site_perl/5.18.2
+export PERL5LIB=$( perl -MConfig -e 'print $Config{sitelibexp};' )
 
-export PATH=/usr/perl5/5.18.1/bin:$PATH
 # For Module::Build based modules
 export PERL_MB_OPT="--installdirs site --destdir ${RPM_BUILD_ROOT} create_packlist=0"
 # For ExtUtil::MakeMaker based modules
