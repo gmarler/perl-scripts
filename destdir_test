@@ -58,14 +58,26 @@ chmod +x cpanm
 CPANM=/tmp/cpanm
 
 if [[ -z "${CPANM}" ]]; then
-  print -- "No cpanm in path - set one!"
+  print -- "No bootstrap cpanm in path - set one!"
   exit 1
 else
-  print -- "CPANM from: [${CPANM}]"
+  print -- "Bootstrap CPANM from: [${CPANM}]"
 fi
 
 ${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
-      --self-contained --noman-pages --pureperl \
+      --self-contained --noman-pages \
+      App::cpanminus
+
+CPANM=$(whence cpanm)
+if [[ -z "${CPANM}" ]]; then
+  print -- "No UPDATED cpanm in path - set one!"
+  exit 1
+else
+  print -- "UPDATED CPANM from: [${CPANM}]"
+fi
+
+${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
+      --self-contained --noman-pages \
       TAP::Harness::Restricted
 
 export HARNESS_SUBCLASS="TAP::Harness::Restricted"
@@ -80,7 +92,7 @@ Digest::MD5
 
 for mod in $MODLIST; do
   ${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
-           --self-contained --noman-pages --pureperl \
+           --reinstall --self-contained --noman-pages \
            $mod
 done
 
