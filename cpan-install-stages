@@ -1,0 +1,120 @@
+###############################################################################
+# PASS 1: Just install TAP::Harness::Restricted, as recommended, to eliminate
+#         the annoying POD doc errors that are really just bogus
+#         anyway
+###############################################################################
+${CPANM} -v --mirror ${PINTOD_SERVER} --mirror-only \
+      --reinstall --self-contained --noman-pages --pureperl \
+      TAP::Harness::Restricted
+
+export HARNESS_SUBCLASS="TAP::Harness::Restricted"
+
+###############################################################################
+# PASS 2: Install the necessary modules used in module installation activities
+#         so we use them for all subsequent module installs.
+#         This is effectively bootstrapping.
+###############################################################################
+MODLIST="
+ExtUtils::MakeMaker
+ExtUtils::Install
+Module::Build
+Module::Runtime
+List::Util
+"
+
+for mod in $MODLIST; do
+  ${CPANM} -v --mirror ${PINTOD_SERVER} --mirror-only \
+           --reinstall --self-contained --noman-pages \
+           $mod
+done
+
+###############################################################################
+# PASS 3: Install Math::Pari, for Crypt:: modules that need it, before pretty
+#         much everything else
+###############################################################################
+${CPANM} -nv --mirror ${PINTOD_SERVER} --mirror-only \
+         --reinstall --self-contained --noman-pages \
+         --configure-args="pari_tgz=${RPM_SOURCE_DIR}/pari-2.3.5.tar.gz" \
+         Math::Pari
+
+###############################################################################
+# PASS 4: Now we get to the real deal - this is the majority of modules
+#         not all of which will install on the very first pass, due to
+#         dependencies being missing the first time around.
+###############################################################################
+MODLIST="
+$(< ${RPM_SOURCE_DIR}/site-cpan-modules)
+"
+
+for mod in $MODLIST; do
+  if [[ "${mod}" == "DBD::Pg" ]]; then
+    export POSTGRES_HOME="/perfwork/pgsql/9.3.4"
+    export POSTGRES_LIB="/perfwork/pgsql/9.3.4/lib -R/perfwork/pgsql/9.3.4/lib -lssl -lcrypto"
+  fi
+  ${CPANM} -v --mirror ${PINTOD_SERVER} --mirror-only \
+           --reinstall --self-contained --noman-pages \
+           $mod
+  if [[ "${mod}" == "DBD::Pg" ]]; then
+    unset POSTGRES_HOME
+    unset POSTGRES_LIB
+  fi
+done
+
+# For those modules that need to pull something down from the web (don't have
+# any yet)
+NEED_PROXY_MODLIST="
+"
+
+http_proxy=http://devproxy.bloomberg.com:82/
+https_proxy=$http_proxy
+ftp_proxy=$http_proxy
+for mod in $NEED_PROXY_MODLIST; do
+  ${CPANM} -v --mirror ${PINTOD_SERVER} --mirror-only \
+           --reinstall --self-contained --noman-pages \
+           $mod
+done
+http_proxy=
+https_proxy=
+ftp_proxy=
+
+PROBLEM_MODLIST="
+Archive::Tar::Wrapper
+Capture::Tiny
+Dist::Zilla::Plugin::CheckPrereqsIndexed
+Dist::Zilla::Plugin::ReadmeFromPod
+IPC::Run
+Module::Build::Tiny
+Module::Install
+Net::Pcap
+Net::SSLeay
+Net::Server
+Pinto
+Regexp::Assemble
+Test::Class::Moose
+Test::DBIx::Class
+"
+# Math::BigInt::Pari
+# Math::Pari
+
+
+NO_TEST_MODLIST="
+MetaCPAN::API
+Inline
+Inline::C
+"
+
+for mod in $PROBLEM_MODLIST $NO_TEST_MODLIST; do
+  ${CPANM} -nv --mirror ${PINTOD_SERVER} --mirror-only \
+           --reinstall --self-contained --noman-pages \
+           $mod
+done
+
+# Again with regular mods to eliminate circular issues
+# Note we leave out --reinstall for this one
+for mod in $MODLIST; do
+  ${CPANM} -v --mirror ${PINTOD_SERVER} --mirror-only \
+           --self-contained --noman-pages \
+           $mod
+done
+
+

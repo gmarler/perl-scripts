@@ -45,30 +45,7 @@ my @problem_modules = qw(
  
   # Task::BeLike::DAGOLDEN
 my @to_install = qw(
- Test::Output
- Test::Class::Moose
- PadWalker
- version
- Readonly
- Log::Dispatch::FileRotate
- MooseX::Log::Log4perl
- Test::Effects
- Time::HiRes
 
- DateTime
- DateTime::Format::Duration
- POSIX::RT::Timer
- File::MMagic
-
- Test::MockTime
- Digest::SHA1
-
- DBIx::Class::Helpers
- DBIx::Class::EncodedColumns
-
- Catalyst::Devel
- Test::DBIx::Class
- 
 );
 
 
@@ -151,9 +128,11 @@ my @to_install = qw(
  
 my @no_man = qw/-D man1dir=none -D man3dir=none/;
 my @solaris_args =
-             qw/-Dusedtrace -Duse64bitint -Duse64bitall
+             qw(-DCC=cc -Dccversion="$($CC -V 2>&1)"
+                -Dusedtrace -Duse64bitint -Duse64bitall
+                -Dsed=/usr/bin/gsed
                 -Duselargefiles -D optimize=-xO3
-                -n /;
+                -n );
 
 # install perl and lock it down
 system( qw/perlbrew install/, @dist,

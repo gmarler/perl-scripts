@@ -2,7 +2,8 @@
 
 PINTOD_SERVER=${1:?Need to specify a pintod server name}
 
-RPM_BUILD_ROOT=/tmp/junkbuild.$$
+#RPM_BUILD_ROOT=/tmp/junkbuild.$$
+RPM_BUILD_ROOT=/tmp/junkbuild
 mkdir ${RPM_BUILD_ROOT}
 
 #
@@ -49,26 +50,26 @@ unset https_proxy
 #
 # Bootstrap cpanm for the build of Perl we're working on
 #
-cd /tmp
-curl -LO http://xrl.us/cpanm
-chmod +x cpanm
+#cd /tmp
+#curl -LO http://xrl.us/cpanm
+#chmod +x cpanm
 
-#CPANM="/usr/perl5/site_perl/5.18.1/bin/cpanm"
+CPANM="/usr/perl5/site_perl/5.18.1/bin/cpanm"
 #CPANM=$(whence cpanm)
-CPANM=/tmp/cpanm
+#CPANM=/tmp/cpanm
 
-if [[ -z "${CPANM}" ]]; then
-  print -- "No bootstrap cpanm in path - set one!"
-  exit 1
-else
-  print -- "Bootstrap CPANM from: [${CPANM}]"
-fi
+#if [[ -z "${CPANM}" ]]; then
+#  print -- "No bootstrap cpanm in path - set one!"
+#  exit 1
+#else
+#  print -- "Bootstrap CPANM from: [${CPANM}]"
+#fi
 
-${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
-      --self-contained --noman-pages \
-      App::cpanminus
+#${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
+#      --self-contained --noman-pages \
+#      App::cpanminus
 
-CPANM=$(whence cpanm)
+#CPANM=$(whence cpanm)
 if [[ -z "${CPANM}" ]]; then
   print -- "No UPDATED cpanm in path - set one!"
   exit 1
@@ -83,6 +84,8 @@ ${CPANM} -v --mirror http://${PINTOD_SERVER}:3111/ --mirror-only \
 export HARNESS_SUBCLASS="TAP::Harness::Restricted"
 
 MODLIST="
+ExtUtils::MakeMaker
+ExtUtils::Install
 Digest::MD5
 "
 # Digest::SHA1
