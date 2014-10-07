@@ -77,12 +77,13 @@ my @solaris_args =
                 -Duselargefiles -Doptimize=-xO3
                 -n ) );
 
-# install perl and lock it down
+# install perl
 system( qw/perlbrew install/, @dist,
         qw/--as/, $as, $perl, @threads,
         @no_man, @solaris_args, @args );
 
-system( qw/chmod -R a-w/, "$ENV{HOME}/perl5/perlbrew/perls/$as" );
+# Lock it down
+# system( qw/chmod -R a-w/, "$ENV{HOME}/perl5/perlbrew/perls/$as" );
  
 # give us a local::lib for installing things
 system( qw/perlbrew lib create/, $lib );
